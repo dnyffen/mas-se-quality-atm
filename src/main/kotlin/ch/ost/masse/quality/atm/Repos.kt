@@ -27,3 +27,16 @@ class ByCustomerRepository<ID: Ident, E: Entity<ID>>{
     }
 }
 
+class Sessions {
+    private val cardIds = HashSet<CardId>()
+
+    fun add(id: CardId) {
+        cardIds.add(id)
+    }
+
+    fun hasSession(id: CardId) = cardIds.contains(id)
+
+    fun remove(cardId: CardId) {
+        cardIds.remove(cardId)
+    }
+}
