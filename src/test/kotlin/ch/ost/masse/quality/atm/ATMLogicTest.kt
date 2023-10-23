@@ -68,6 +68,24 @@ internal class ATMLogicTest {
     }
 
     @Test
+    fun testWithdrawFromOtherCustomer() {
+        val cardId = CardId(1)
+        val customerId = CustomerId(1)
+        val customerId2 = CustomerId(2)
+        val accountId = AccountId(1)
+        val cards: ByCustomerRepository<CardId, Card> = ByCustomerRepository()
+        val accounts: ByCustomerRepository<AccountId, Account> = ByCustomerRepository()
+        cards.addEntity(customerId, Card(cardId, 1234))
+        accounts.addEntity(customerId2, Account(accountId, AccountType.SAVINGS, BigDecimal(100)))
+
+        val atmLogic = ATMLogic(accounts = accounts, cards = cards)
+        atmLogic.dispatchCommand(StartSession(cardId, 1234))
+
+        assertEquals(Failure<Unit>("Account not found"), atmLogic.dispatchCommand(WithDraw(cardId, accountId, BigDecimal(80))))
+
+    }
+
+    @Test
     fun testTransfer() {
         val cardId = CardId(1)
         val customerId = CustomerId(1)

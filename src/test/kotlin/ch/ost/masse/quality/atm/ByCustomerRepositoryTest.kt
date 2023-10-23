@@ -63,9 +63,26 @@ internal class ByCustomerRepositoryTest {
         assertEquals(Failure<Card>("Card not found"), repo.getById(CardId(3), "Card not found"))
     }
 
+    @Test
+    fun testGetCustomerForId() {
+        val repo = ByCustomerRepository<CardId, Card>()
+        val cust1 = CustomerId(1)
+        val cust2 = CustomerId(2)
+        val card1 = Card(CardId(1), 1233)
+        val card2 = Card(CardId(2), 1233)
+        val card3 = Card(CardId(3), 1233)
+
+        repo.addEntity(cust1, card1)
+        repo.addEntity(cust1, card2)
+        repo.addEntity(cust2, card3)
+
+        assertEquals(cust1, repo.getCustomerForId(card1.id))
+        assertEquals(cust1, repo.getCustomerForId(card2.id))
+        assertEquals(cust2, repo.getCustomerForId(card3.id))
+    }
 
     @Test
-    fun update() {
+    fun testUpdate() {
         val repo = ByCustomerRepository<CardId, Card>()
         val cust1 = CustomerId(1)
         val cust2 = CustomerId(2)

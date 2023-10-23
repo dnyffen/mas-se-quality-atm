@@ -17,10 +17,11 @@ class ATMLogic(
     }
 
     private fun dispatchSessionCommands(command: CommandInSession) = validateSession(command.cardId).then {
+        val customerId = fetchCustomer(command.cardId)
         when (command) {
-            is WithDraw -> withdraw(command.accountId, command.amount)
-            is Deposit -> deposit(command.accountId, command.amount)
-            is Transfer -> transfer(command)
+            is WithDraw -> withdraw(customerId, command.accountId, command.amount)
+            is Deposit -> deposit(customerId, command.accountId, command.amount)
+            is Transfer -> transfer(customerId, command)
             is ChangePin -> changePin(command)
         }
     }
@@ -38,20 +39,21 @@ class ATMLogic(
             .map { cards.update(Card(id, newPin)) }
     }
 
-    private fun transfer(command: Transfer): Result<Unit> = with(command) {
-        withdraw(fromAccountId, amount)
-            .then { deposit(toAccountId, amount) }
+    private fun transfer(customerId: CustomerId, command: Transfer): Result<Unit> = with(command) {
+        withdraw(customerId, fromAccountId, amount)
+            .then { deposit(customerId, toAccountId, amount) }
     }
 
-    private fun deposit(accountId: AccountId, amount: BigDecimal): Result<Unit> = fetchAccount(accountId)
+    private fun deposit(customerId: CustomerId, accountId: AccountId, amount: BigDecimal): Result<Unit> = fetchAccount(customerId, accountId)
         .map { accounts.update(Account(id, type, balance.plus(amount))) }
 
-    private fun withdraw(accountId: AccountId, amount: BigDecimal): Result<Unit> = fetchAccount(accountId)
+    private fun withdraw(customerId: CustomerId, accountId: AccountId, amount: BigDecimal): Result<Unit> = fetchAccount(customerId, accountId)
         .then { ensureMinBalance(amount) }
         .map { accounts.update(Account(id, type, balance.minus(amount))) }
 
-    private fun fetchAccount(accountId: AccountId) =
-        accounts.getById(accountId, "Account $accountId not found")
+    private fun fetchCustomer(cardId: CardId): CustomerId = cards.getCustomerForId(cardId)
+    private fun fetchAccount(customerId: CustomerId, accountId: AccountId) =
+        accounts.getByIdAndCustomer(customerId, accountId, "Account not found")
 
     private fun validateSession(cardId: CardId): Result<Unit> = if (sessions.hasSession(cardId)) {
         Success(Unit)
